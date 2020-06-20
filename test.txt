@@ -1,0 +1,104 @@
+HomeController.cs
+using DevOpsDemo.Models;
+using DevOpsDemo.Repository;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+namespace DevOpsDemo.Controllers
+{
+public class HomeController : Controller
+{
+IPostRepository postRepository;
+public HomeController(IPostRepository _postRepository)
+{
+postRepository = _postRepository;
+}
+public IActionResult Index()
+{
+var model = postRepository.GetPosts();
+return View(model);
+}
+public IActionResult About()
+{
+ViewData["Message"] = "Your application description page."; return View();
+}
+public IActionResult Contact()
+{
+ViewData["Message"] = "Your contact page.";
+
+return View();
+}
+public IActionResult Privacy()
+{
+return View();
+}
+[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+public IActionResult Error()
+{
+return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+} } }
+We will populate the data on View in tabular format. So, once data will be there, we will iterate on it and 
+display the data as follows.
+Index.cshtml
+@model IList<DevOpsDemo.Models.PostViewModel>
+@{
+ViewData["Title"] = "Home Page"; }<div class="row">
+<h2>Post List</h2> <table class="table">
+<thead> <tr><th>Post Id</th> <th>Title</th> <th>Description</th> <th>Author</th>
+</tr>
+</thead> <tbody> @foreach (var item in Model)
+{ <tr><td>@Html.DisplayFor(modelItem => item.PostId)</td> <td>@Html.DisplayFor(modelItem => item.Title)</td> <td>@Html.DisplayFor(modelItem => item.Description)</td> <td>@Html.DisplayFor(modelItem => item.Author)</td>
+</tr> }
+</tbody>
+</table>
+</div>
+PostTestController.cs
+using DevOpsDemo.Controllers;
+using DevOpsDemo.Models;
+using DevOpsDemo.Repository;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using Xunit;
+namespace DevOpsDemo.Test
+{
+public class PostTestController
+{
+private PostRepository repository;
+public PostTestController()
+{
+repository = new PostRepository();
+}
+[Fact]
+public void Test_Index_View_Result()
+{
+//Arrange
+var controller = new HomeController(this.repository);
+//Act
+var result = controller.Index();
+//Assert
+Assert.IsType<ViewResult>(result);
+}
+[Fact]
+public void Test_Index_Return_Result()
+{
+//Arrange 
+var controller = new HomeController(this.repository);
+//Act
+var result = controller.Index();
+//Assert 
+Assert.NotNull(result);
+}
+[Fact]
+public void Test_Index_GetPosts_MatchData()
+{
+//Arrange 
+var controller = new HomeController(this.repository);
+//Act 
+var result = controller.Index();
+//Assert 
+var viewResult = Assert.IsType<ViewResult>(result);
+var model = Assert.IsAssignableFrom<List<PostViewModel>>(viewResult.ViewData.Model);
+Assert.Equal(3, model.Count);
+Assert.Equal(101, model[0].PostId);
+Assert.Equal("DevOps Demo Title 1", model[0].Title);
+} } }
